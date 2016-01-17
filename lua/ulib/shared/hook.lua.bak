@@ -48,9 +48,8 @@ function Add( event_name, name, func, priority )
 	if ( !isnumber( priority ) ) then return end
 
 	priority = math.floor( priority )
-	--if ( priority < -2 ) then priority = -2 end -- math.Clamp may not have been defined yet
-	--if ( priority > 2 ) then priority = 2 end
-	priority = priority <= -20 and -2 or priority >= 20 and 2 or priority < -2 and -1 or priority > 2 and 1 or priority
+	if ( priority < -2 ) then priority = -2 end -- math.Clamp may not have been defined yet
+	if ( priority > 2 ) then priority = 2 end
 
 	Remove( event_name, name ) -- This keeps the event name unique, even among the priorities
 
