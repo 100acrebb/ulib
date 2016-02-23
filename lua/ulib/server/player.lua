@@ -90,9 +90,10 @@ ULib.BanMessage = [[
 ---= Time Left =---
 {{TIME_LEFT}} ]]
 
-local function getBanMessage( steamid )
-	local banData = ULib.bans[ steamid ]
+function ULib.getBanMessage( steamid, banData, templateMessage )
+	banData = banData or ULib.bans[ steamid ]
 	if not banData then return end
+	templateMessage = templateMessage or ULib.BanMessage
 
 	local replacements = {
 		BANNED_BY = "(Unknown)",
@@ -121,7 +122,7 @@ local function getBanMessage( steamid )
 		replacements.TIME_LEFT = ULib.secondsToStringTime( unban - os.time() )
 	end
 
-	return ULib.BanMessage:gsub( "{{([%w_]+)}}", replacements )
+	return templateMessage:gsub( "{{([%w_]+)}}", replacements )
 end
 
 local function checkBan( steamid64, ip, password, clpassword, name )
@@ -132,7 +133,7 @@ local function checkBan( steamid64, ip, password, clpassword, name )
 	-- Nothing useful to show them, go to default message
 	if not banData.admin and not banData.reason and not banData.unban and not banData.time then return end
 
-	local message = getBanMessage( steamid )
+	local message = ULib.getBanMessage( steamid )
 	Msg(string.format("%s (%s)<%s> was kicked by ULib because they are on the ban list\n", name, steamid, ip))
 	return false, message
 end
@@ -266,7 +267,7 @@ function ULib.addBan( steamid, time, reason, name, admin )
 
 	local longReason = shortReason
 	if reason or strTime or admin then -- If we have something useful to show
-		longReason = "\n" .. getBanMessage( steamid ) .. "\n" -- Newlines because we are forced to show "Disconnect: <msg>."
+		longReason = "\n" .. ULib.getBanMessage( steamid ) .. "\n" -- Newlines because we are forced to show "Disconnect: <msg>."
 	end
 
 	local ply = player.GetBySteamID( steamid )
@@ -457,7 +458,7 @@ function ULib.refreshBans()
 	-- We're queueing this because it will split the load out for VERY large ban files
 	ULib.queueFunctionCall( function() ULib.fileWrite( ULib.BANS_FILE, ULib.makeKeyValues( ULib.bans ) ) end )
 end
-ULib.pcallError( ULib.refreshBans )
+hook.Add( "Initialize", "ULibLoadBans", ULib.refreshBans, HOOK_MONITOR_HIGH )
 
 
 --[[
